@@ -45,16 +45,10 @@ class Block {
             // Returning the Block is not valid
 
             // Returning the Block is valid
+          let clonedBlock = {...self, hash:null};
+          let newHash = SHA256(JSON.stringify(clonedBlock)).toString();
+          resolve(self.hash === newHash);
 
-          let hash = this.hash;
-          self.hash = null;
-          let calculateHash = SHA256(JSON.stringify(self)).toString()
-          self.hash = hash
-          if(calculateHash === hash){
-            resolve(true);
-          } else {
-            resolve(false);
-          }
         });
     }
 
@@ -73,8 +67,10 @@ class Block {
         // Parse the data to an object to be retrieve.
 
         // Resolve with the data if the object isn't the Genesis block
-
-      return JSON.parse(hex2ascii(this.body));
+      if(this.height !== 0){
+        return JSON.parse(hex2ascii(this.body));
+      }
+      return null;
     }
 
 }

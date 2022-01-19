@@ -71,9 +71,13 @@ class Blockchain {
                 block.previousBlockHash = this.chain[this.chain.length-1].hash;
             }
             block.hash = SHA256(JSON.stringify(block)).toString();
-            this.chain.push(block);
-            await this.validateChain();
-            resolve(block)
+            let errors = await self.validateChain();
+            if(errors.length !== 0) {
+                resolve("blockchain is invalid");
+            } else {
+                self.chain.push(block);
+                resolve(block);
+            }
         });
     }
 
@@ -114,7 +118,7 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             let time = parseInt(message.split(':')[1]);
             let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
-            if(currentTime > time + 5*60*1000){
+            if(currentTime > time + 300){
                 reject("Star is older than 5 minutes");
             }
             if(!bitcoinMessage.verify(message, address, signature)){
@@ -135,7 +139,7 @@ class Blockchain {
     getBlockByHash(hash) {
         let self = this;
         return new Promise((resolve, reject) => {
-            let block = self.chain.filter(block => hash === block.hash);
+            let block = self.chain.find(block => hash === block.hash);
                 if(block){
                     resolve(block);
                 }
@@ -193,18 +197,19 @@ class Blockchain {
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
 
-            self.chain.forEach(block => {
+            for (const block of self.chain) {
+                let valid = await block.validate();
                 if(block.height === 0){
-                    if(!block.validate() ) {
+                    if(!valid ) {
                         errorLog.push(block);
                     }
                 }else {
-                    if (!block.validate() || block.previousBlockHash
+                    if (!valid || block.previousBlockHash
                         !== self.chain[block.height - 1].hash) {
                         errorLog.push(block);
                     }
                 }
-            });
+            }
             resolve(errorLog);
         });
     }
