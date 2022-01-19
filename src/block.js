@@ -47,10 +47,10 @@ class Block {
             // Returning the Block is valid
 
           let hash = this.hash;
-          self.hash = "";
+          self.hash = null;
           let calculateHash = SHA256(JSON.stringify(self)).toString()
-
-          if(calculateHash.equals(hash)){
+          self.hash = hash
+          if(calculateHash === hash){
             resolve(true);
           } else {
             resolve(false);

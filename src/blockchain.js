@@ -72,6 +72,7 @@ class Blockchain {
             }
             block.hash = SHA256(JSON.stringify(block)).toString();
             this.chain.push(block);
+            await this.validateChain();
             resolve(block)
         });
     }
@@ -191,11 +192,19 @@ class Blockchain {
         let self = this;
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
-            for (let i = 1; i < self.chain.length; i++) {
-                if(!self.chain[i-1].hash.equals(self.chain[i].previousBlockHash || chain[i].validate()) ){
-                    errorLog.push(i);
+
+            self.chain.forEach(block => {
+                if(block.height === 0){
+                    if(!block.validate() ) {
+                        errorLog.push(block);
+                    }
+                }else {
+                    if (!block.validate() || block.previousBlockHash
+                        !== self.chain[block.height - 1].hash) {
+                        errorLog.push(block);
+                    }
                 }
-            }
+            });
             resolve(errorLog);
         });
     }
